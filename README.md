@@ -1,2 +1,2 @@
 # FaceDetectionAndTracking
-Face detection and tracking interface.
+Face detection and tracking from video or camera.

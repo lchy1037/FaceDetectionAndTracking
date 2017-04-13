@@ -9,8 +9,15 @@
 #include <QRadioButton>
 #include <QTableWidget>
 #include <QHBoxLayout>
-//#include <cv.h>
-//#include <highgui.h>
+#include <QDebug>
+#include <QApplication>
+#include <QThread>
+#include <cv.h>
+#include <opencv.hpp>
+#include <highgui.h>
+using namespace cv;
+#define VIDEOWIDTH 960
+#define VIDEOHEIGHT 720
 
 class MainWidget : public QWidget
 {
@@ -22,6 +29,12 @@ public:
     void SetMainWindowLayout();
     void SetConnect();
 
+protected:
+    void StartPlayLocalVideo();
+    void StartPlayCamera();
+    void UpdateImage(QImage &image);
+    QImage MatToQImage(cv::Mat &cvImg);
+
 private:
     QRadioButton *local_video_radio;
     QRadioButton *camera_radio;
@@ -32,7 +45,7 @@ private:
 
 private slots:
     void ChangeLineEditText(bool);
-
+    void StartPlayVideo(bool);
 };
 
 #endif // MAINWIDGET_H

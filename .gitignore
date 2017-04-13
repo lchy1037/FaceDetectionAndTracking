@@ -3,3 +3,6 @@ build-FaceTracking-Desktop_Qt_5_7_0_MinGW_32bit/
 
 # ignore FaceTracking.pro.user
 FaceTracking/FaceTracking.pro.user
+
+# ignore FaceTracking.pro
+FaceTracking/FaceTracking.pro

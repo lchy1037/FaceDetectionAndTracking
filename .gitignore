@@ -6,3 +6,6 @@ FaceTracking/FaceTracking.pro.user
 
 # ignore FaceTracking.pro
 FaceTracking/FaceTracking.pro
+
+# ignore FaceTracking/faces
+FaceTracking/faces

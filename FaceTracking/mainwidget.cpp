@@ -17,6 +17,20 @@ MainWidget::MainWidget(QWidget *parent)
     video_label->setPixmap(pixmap1);
     video_label->setScaledContents(true);
     face_info_table = new QTableWidget();
+    face_info_table->setColumnCount(4);
+    face_info_table->setColumnWidth(0, 75);
+    face_info_table->setColumnWidth(1, 100);
+    face_info_table->setColumnWidth(2, 100);
+    face_info_table->setColumnWidth(3, 50);
+    face_info_table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    face_info_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    face_info_table->verticalHeader()->setVisible(false);
+    face_info_table->setShowGrid(true);
+//    face_info_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+//    face_info_table->horizontalScrollBar()->setEnabled(false);
+    QStringList header;
+    header << tr("姓名") << tr("模板图") << tr("抓拍图") << tr("相似度");
+    face_info_table->setHorizontalHeaderLabels(header);
 
     SetMainWindowLayout();
     SetConnect();
@@ -117,6 +131,7 @@ void MainWidget::StartPlayCamera()
     while(1){
        cv::Mat frame;
        capture >> frame;
+       DetectFaceCascade(frame);
        QImage image = MatToQImage(frame);
        UpdateImage(image);
        QThread::msleep(40);
@@ -125,7 +140,7 @@ void MainWidget::StartPlayCamera()
     capture.release();
 }
 
-QImage MainWidget::MatToQImage(Mat &cvImg)
+QImage MainWidget::MatToQImage(cv::Mat &cvImg)
 {
     QImage qImg;
     if(cvImg.channels()==3){
@@ -146,6 +161,94 @@ QImage MainWidget::MatToQImage(Mat &cvImg)
                     QImage::Format_RGB888);
     }
     return qImg;
+}
+
+void MainWidget::DetectFaceCascade(cv::Mat &img)
+{
+    QString xmlPath = "C:/InstallFiles/OpenCV3.1.0/build/etc/haarcascades/haarcascade_frontalface_default.xml";
+    cv::CascadeClassifier ccf;
+    if(!ccf.load(xmlPath.toStdString())){
+        qDebug()<<"Failed to load" << xmlPath;
+        return;
+    }
+    std::vector<cv::Rect> faces;
+    cv::Mat gray;
+    cv::cvtColor(img, gray, CV_BGR2GRAY);
+    cv::equalizeHist(gray, gray);
+    ccf.detectMultiScale(gray, faces, 1.1, 3, 0, cv::Size(10, 10), cv::Size(100, 100));
+    for(std::vector<cv::Rect>::const_iterator iter = faces.begin(); iter != faces.end(); ++iter){
+        cv::Mat imgRoi;
+        QImage qimgRoi;
+        img(*iter).copyTo(imgRoi);
+        qimgRoi = MatToQImage(imgRoi);
+        ShowInTable("1_1", "./faces/1_0.jpg", qimgRoi, 0.97);
+        cv::rectangle(img, *iter, cv::Scalar(0, 0, 255), 2, 8);
+    }
+}
+
+void MainWidget::ShowInTable(const QString &name, const QString &imagePath, const QImage &shotFace, const float cosSim)
+{
+    int rowHeight = 90;
+
+    QTableWidgetItem *item0 = new QTableWidgetItem();
+    item0->setText(name);
+    item0->setTextAlignment(Qt::AlignCenter);
+
+    QLabel *item1 = new QLabel();
+    item1->setPixmap(QPixmap(imagePath).scaled(rowHeight - 20, rowHeight - 20));
+    item1->setAlignment(Qt::AlignHCenter);
+
+    QLabel *item2 = new QLabel();
+    item2->setPixmap(QPixmap::fromImage(shotFace).scaled(rowHeight - 20, rowHeight - 20));
+    item2->setAlignment(Qt::AlignHCenter);
+
+    QTableWidgetItem *item3 = new QTableWidgetItem();
+    item3->setText(QString("%1").arg(cosSim));
+    item3->setTextAlignment(Qt::AlignCenter);
+
+    int rowCount = face_info_table->rowCount();
+    if(rowCount >= MAXROWCOUNT){
+        face_info_table->removeRow(0);
+    }
+    face_info_table->insertRow(rowCount);
+    face_info_table->setRowHeight(rowCount, rowHeight);
+
+    face_info_table->setItem(rowCount, 0, item0);
+    face_info_table->setCellWidget(rowCount, 1, item1);
+    face_info_table->setCellWidget(rowCount, 2, item2);
+    face_info_table->setItem(rowCount, 3, item3);
+
+    face_info_table->verticalScrollBar()->setValue(face_info_table->rowCount());
+}
+
+void MainWidget::ReadCsv(QString &filename, std::vector<cv::Mat> &images, std::vector<int> &labels, char separator)
+{
+    std::ifstream file(filename.toStdString().c_str(), std::ios::in);
+    if(!file){
+        qDebug() << "Cann't find the file" << filename;
+        return;
+    }
+    std::string line, path, classLabel;
+    while(std::getline(file, line)){
+        std::stringstream liness(line);
+        std::getline(liness, path, separator);
+        std::getline(liness, classLabel);
+        if(!path.empty() && !classLabel.empty()){
+            images.push_back(cv::imread(path, 0));
+            labels.push_back(atoi(classLabel.c_str()));
+        }
+    }
+}
+
+void MainWidget::TrainData(QString &fnCsv)
+{
+    std::vector<cv::Mat> images;
+    std::vector<int> labels;
+    ReadCsv(fnCsv, images, labels);
+    if(images.size() <= 1){
+        qDebug() << "Training images number is less than 2. Please add more images to training set.";
+        return;
+    }
 }
 
 MainWidget::~MainWidget()

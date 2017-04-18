@@ -9,7 +9,7 @@ MainWidget::MainWidget(QWidget *parent)
     camera_radio = new QRadioButton("摄像头");
     url_lineedit = new QLineEdit();
     url_lineedit->setPlaceholderText("请选择视频来源");
-    start_btn = new QPushButton("开始");
+    start_btn = new QPushButton("打开");
     video_label = new QLabel();
     video_label->resize(QSize(VIDEOWIDTH, VIDEOHEIGHT));
     QPixmap pixmap1(":/bg/bg1");

@@ -22,6 +22,7 @@ MainWidget::MainWidget(QWidget *parent)
     face_info_table->setColumnWidth(1, 100);
     face_info_table->setColumnWidth(2, 100);
     face_info_table->setColumnWidth(3, 50);
+//    face_info_table->resize(1080, 325);
     face_info_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     face_info_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     face_info_table->verticalHeader()->setVisible(false);

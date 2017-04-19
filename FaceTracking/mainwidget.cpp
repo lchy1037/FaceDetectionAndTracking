@@ -197,11 +197,11 @@ void MainWidget::ShowInTable(const QString &name, const QString &imagePath, cons
 
     QLabel *item1 = new QLabel();
     item1->setPixmap(QPixmap(imagePath).scaled(rowHeight - 20, rowHeight - 20));
-    item1->setAlignment(Qt::AlignHCenter);
+    item1->setAlignment(Qt::AlignCenter);
 
     QLabel *item2 = new QLabel();
     item2->setPixmap(QPixmap::fromImage(shotFace).scaled(rowHeight - 20, rowHeight - 20));
-    item2->setAlignment(Qt::AlignHCenter);
+    item2->setAlignment(Qt::AlignCenter);
 
     QTableWidgetItem *item3 = new QTableWidgetItem();
     item3->setText(QString("%1").arg(cosSim));

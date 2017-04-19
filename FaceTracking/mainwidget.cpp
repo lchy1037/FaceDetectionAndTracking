@@ -184,6 +184,7 @@ void MainWidget::DetectFaceCascade(cv::Mat &img)
         qimgRoi = MatToQImage(imgRoi);
         ShowInTable("1_1", "./faces/1_0.jpg", qimgRoi, 0.97);
         cv::rectangle(img, *iter, cv::Scalar(0, 0, 255), 2, 8);
+        cv::putText(img, "1_1", cv::Point((*iter).x, (*iter).y-5), CV_FONT_HERSHEY_TRIPLEX, 0.5, cv::Scalar(0, 0, 255));
     }
 }
 

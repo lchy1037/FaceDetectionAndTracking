@@ -33,6 +33,12 @@ MainWidget::MainWidget(QWidget *parent)
     header << tr("姓名") << tr("模板图") << tr("抓拍图") << tr("相似度");
     face_info_table->setHorizontalHeaderLabels(header);
 
+    seetaDetector = new seeta::FaceDetection("D:/Studio/Project/git/FaceDetectionAndTracking/FaceTracking/SeetaFaceDetection/model/seeta_fd_frontal_v1.0.bin");
+    seetaDetector->SetMinFaceSize(40);
+    seetaDetector->SetScoreThresh(2.f);
+    seetaDetector->SetImagePyramidScaleFactor(0.8f);
+    seetaDetector->SetWindowStep(4, 4);
+
     SetMainWindowLayout();
     SetConnect();
 }
@@ -120,19 +126,25 @@ void MainWidget::StartPlayLocalVideo()
 void MainWidget::StartPlayCamera()
 {
     cv::VideoCapture capture;
-    if(!capture.open(0)){
-        qDebug() << "Cann't open camera.";
-        return;
+
+    // 打开网络摄像头 string = "rtsp://192.168.1.156:554/ch1/1"
+    if(url_lineedit->text() != QString("")){
+        if(!capture.open(url_lineedit->text().toStdString())){
+            qDebug() << "Cann't open camera" << url_lineedit->text();
+            return;
+        }
+    }else{
+        if(!capture.open(0)){
+            qDebug() << "Cann't open camera.";
+            return;
+        }
     }
-//    // 打开网络摄像头 string = "rtsp://192.168.1.156:554/ch1/1"
-//    if(!capture.open(url_lineedit->text().toStdString())){
-//        qDebug() << "Cann't open camera" << url_lineedit->text();
-//        return;
-//    }
+
     while(1){
        cv::Mat frame;
        capture >> frame;
-       DetectFaceCascade(frame);
+//       DetectFaceCascade(frame);
+       SeetaDetect(frame);
        QImage image = MatToQImage(frame);
        UpdateImage(image);
        QThread::msleep(40);
@@ -188,6 +200,42 @@ void MainWidget::DetectFaceCascade(cv::Mat &img)
     }
 }
 
+void MainWidget::SeetaDetect(cv::Mat &img)
+{
+    cv::Mat imgGray;
+    if(img.channels() != 1)
+        cv::cvtColor(img, imgGray, cv::COLOR_RGB2GRAY);
+    else
+        imgGray = img;
+    seeta::ImageData imgData;
+    imgData.data = imgGray.data;
+    imgData.width = imgGray.cols;
+    imgData.height = imgGray.rows;
+    imgData.num_channels = 1;
+    long t0 = cv::getTickCount();
+    std::vector<seeta::FaceInfo> faces = seetaDetector->Detect(imgData);
+    long t1 = cv::getTickCount();
+    double secs = (t1-t0)/cv::getTickFrequency();
+//    qDebug() << "Detector takes " << secs << " seconds";
+    cv::Rect faceRect;
+    int numFace = faces.size();
+    for(int i = 0; i != numFace; ++i){
+        faceRect.x = faces[i].bbox.x;
+        faceRect.y = faces[i].bbox.y;
+        faceRect.width = faces[i].bbox.width;
+        faceRect.height = faces[i].bbox.height;
+
+        cv::Mat imgRoi;
+        QImage qimgRoi;
+        img(faceRect).copyTo(imgRoi);
+        qimgRoi = MatToQImage(imgRoi);
+        ShowInTable("1_1", "./faces/1_0.jpg", qimgRoi, 0.97);
+
+        cv::rectangle(img, faceRect, CV_RGB(0, 0, 255), 2, 8, 0);
+        cv::putText(img, "1_1", cv::Point(faceRect.x, faceRect.y - 5), CV_FONT_HERSHEY_TRIPLEX, 0.5, CV_RGB(0, 0, 255));
+    }
+}
+
 void MainWidget::ShowInTable(const QString &name, const QString &imagePath, const QImage &shotFace, const float cosSim)
 {
     int rowHeight = 90;
@@ -221,36 +269,6 @@ void MainWidget::ShowInTable(const QString &name, const QString &imagePath, cons
     face_info_table->setItem(rowCount, 3, item3);
 
     face_info_table->verticalScrollBar()->setValue(face_info_table->rowCount());
-}
-
-void MainWidget::ReadCsv(QString &filename, std::vector<cv::Mat> &images, std::vector<int> &labels, char separator)
-{
-    std::ifstream file(filename.toStdString().c_str(), std::ios::in);
-    if(!file){
-        qDebug() << "Cann't find the file" << filename;
-        return;
-    }
-    std::string line, path, classLabel;
-    while(std::getline(file, line)){
-        std::stringstream liness(line);
-        std::getline(liness, path, separator);
-        std::getline(liness, classLabel);
-        if(!path.empty() && !classLabel.empty()){
-            images.push_back(cv::imread(path, 0));
-            labels.push_back(atoi(classLabel.c_str()));
-        }
-    }
-}
-
-void MainWidget::TrainData(QString &fnCsv)
-{
-    std::vector<cv::Mat> images;
-    std::vector<int> labels;
-    ReadCsv(fnCsv, images, labels);
-    if(images.size() <= 1){
-        qDebug() << "Training images number is less than 2. Please add more images to training set.";
-        return;
-    }
 }
 
 MainWidget::~MainWidget()

@@ -19,6 +19,8 @@
 #include <highgui.h>
 #include <features2d.hpp>
 #include <fstream>
+
+#include <face_detection.h>
 #define VIDEOWIDTH 960
 #define VIDEOHEIGHT 720
 #define MAXROWCOUNT 9
@@ -39,8 +41,7 @@ protected:
     void UpdateImage(QImage &image);
     QImage MatToQImage(cv::Mat &cvImg);
     void DetectFaceCascade(cv::Mat &img);
-    void ReadCsv(QString &filename, std::vector<cv::Mat> &images, std::vector<int> &labels, char separator = ';');
-    void TrainData(QString &fnCsv);
+    void SeetaDetect(cv::Mat &img);
     void ShowInTable(const QString &name, const QString &imagePath, const QImage &shotFace, const float cosSim);
 
 private:
@@ -50,6 +51,7 @@ private:
     QPushButton *start_btn;
     QLabel *video_label;
     QTableWidget *face_info_table;
+    seeta::FaceDetection *seetaDetector;
 
 private slots:
     void ChangeLineEditText(bool);

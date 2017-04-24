@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/bg">
         <file alias="bg1">img/1.png</file>
-        <file alias="bg2">img/2.png</file>
     </qresource>
 </RCC>

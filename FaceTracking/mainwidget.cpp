@@ -39,6 +39,7 @@ MainWidget::MainWidget(QWidget *parent)
     seetaDetector->SetImagePyramidScaleFactor(0.8f);
     seetaDetector->SetWindowStep(4, 4);
 
+    stopFlag = false;
     SetMainWindowLayout();
     SetConnect();
 }
@@ -91,8 +92,19 @@ void MainWidget::ChangeLineEditText(bool)
 
 void MainWidget::StartPlayVideo(bool)
 {
-    if(local_video_radio->isChecked()) StartPlayLocalVideo();
-    if(camera_radio->isChecked()) StartPlayCamera();
+    if(start_btn->text() == tr("打开")){
+        if(local_video_radio->isChecked()){
+            start_btn->setText(tr("关闭"));
+            StartPlayLocalVideo();
+        }
+        if(camera_radio->isChecked()){
+            start_btn->setText(tr("关闭"));
+            StartPlayCamera();
+        }
+    }else{
+        start_btn->setText(tr("打开"));
+        stopFlag = true;
+    }
 }
 
 void MainWidget::UpdateImage(QImage &image)
@@ -113,6 +125,12 @@ void MainWidget::StartPlayLocalVideo()
     double frame_rate = capture.get(CV_CAP_PROP_FPS);
     int delay = 1000 / frame_rate;
     while(1){
+        if(stopFlag){
+            QPixmap pixmap1(":/bg/bg1");
+            pixmap1 = pixmap1.scaled(video_label->size());
+            video_label->setPixmap(pixmap1);
+            break;
+        }
         cv::Mat frame;
         if(!capture.read(frame)) break;
         QImage image = MatToQImage(frame);
@@ -126,7 +144,6 @@ void MainWidget::StartPlayLocalVideo()
 void MainWidget::StartPlayCamera()
 {
     cv::VideoCapture capture;
-
     // 打开网络摄像头 string = "rtsp://192.168.1.156:554/ch1/1"
     if(url_lineedit->text() != QString("")){
         if(!capture.open(url_lineedit->text().toStdString())){
@@ -141,6 +158,12 @@ void MainWidget::StartPlayCamera()
     }
 
     while(1){
+        if(stopFlag){
+            QPixmap pixmap1(":/bg/bg1");
+            pixmap1 = pixmap1.scaled(video_label->size());
+            video_label->setPixmap(pixmap1);
+            break;
+        }
        cv::Mat frame;
        capture >> frame;
 //       DetectFaceCascade(frame);
@@ -189,7 +212,11 @@ void MainWidget::DetectFaceCascade(cv::Mat &img)
     cv::cvtColor(img, gray, CV_BGR2GRAY);
     cv::equalizeHist(gray, gray);
     ccf.detectMultiScale(gray, faces, 1.1, 3, 0, cv::Size(10, 10), cv::Size(100, 100));
-    for(std::vector<cv::Rect>::const_iterator iter = faces.begin(); iter != faces.end(); ++iter){
+    for(std::vector<cv::Rect>::iterator iter = faces.begin(); iter != faces.end(); ++iter){
+        if((*iter).x < 0) (*iter).x = 0;
+        if((*iter).y < 0) (*iter).y = 0;
+        if((*iter).y + (*iter).height > gray.rows) (*iter).height = gray.rows - (*iter).y - 1;
+        if((*iter).x + (*iter).width > gray.cols) (*iter).width = gray.cols - (*iter).x - 1;
         cv::Mat imgRoi;
         QImage qimgRoi;
         img(*iter).copyTo(imgRoi);
@@ -216,7 +243,7 @@ void MainWidget::SeetaDetect(cv::Mat &img)
     std::vector<seeta::FaceInfo> faces = seetaDetector->Detect(imgData);
     long t1 = cv::getTickCount();
     double secs = (t1-t0)/cv::getTickFrequency();
-//    qDebug() << "Detector takes " << secs << " seconds";
+    qDebug() << "Detector takes " << secs << " seconds"  << imgData.width << imgData.height;
     cv::Rect faceRect;
     int numFace = faces.size();
     for(int i = 0; i != numFace; ++i){
@@ -225,6 +252,10 @@ void MainWidget::SeetaDetect(cv::Mat &img)
         faceRect.width = faces[i].bbox.width;
         faceRect.height = faces[i].bbox.height;
 
+        if(faceRect.x < 0) faceRect.x = 0;
+        if(faceRect.y < 0) faceRect.y = 0;
+        if(faceRect.y + faceRect.height > imgGray.rows) faceRect.height = imgGray.rows - faceRect.y - 1;
+        if(faceRect.x + faceRect.width > imgGray.cols) faceRect.width = imgGray.cols - faceRect.x - 1;
         cv::Mat imgRoi;
         QImage qimgRoi;
         img(faceRect).copyTo(imgRoi);
@@ -269,6 +300,25 @@ void MainWidget::ShowInTable(const QString &name, const QString &imagePath, cons
     face_info_table->setItem(rowCount, 3, item3);
 
     face_info_table->verticalScrollBar()->setValue(face_info_table->rowCount());
+}
+
+void MainWidget::closeEvent(QCloseEvent *event)
+{
+    switch(QMessageBox::information(this, tr("关闭提示"), tr("确认关闭？"), QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes))
+    {
+    case QMessageBox::Yes:
+        qApp->quit();
+        break;
+    case QMessageBox::No:
+        event->ignore();
+        break;
+    case QMessageBox::Cancel:
+        event->ignore();
+        break;
+    default:
+        event->ignore();
+        break;
+    }
 }
 
 MainWidget::~MainWidget()

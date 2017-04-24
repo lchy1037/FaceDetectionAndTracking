@@ -14,6 +14,8 @@
 #include <QDebug>
 #include <QApplication>
 #include <QThread>
+#include <QMessageBox>
+#include <QCloseEvent>
 #include <cv.h>
 #include <opencv.hpp>
 #include <highgui.h>
@@ -43,6 +45,7 @@ protected:
     void DetectFaceCascade(cv::Mat &img);
     void SeetaDetect(cv::Mat &img);
     void ShowInTable(const QString &name, const QString &imagePath, const QImage &shotFace, const float cosSim);
+    void closeEvent(QCloseEvent *e);
 
 private:
     QRadioButton *local_video_radio;
@@ -52,6 +55,8 @@ private:
     QLabel *video_label;
     QTableWidget *face_info_table;
     seeta::FaceDetection *seetaDetector;
+
+    bool stopFlag;
 
 private slots:
     void ChangeLineEditText(bool);

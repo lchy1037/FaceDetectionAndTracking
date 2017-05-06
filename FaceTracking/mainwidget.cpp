@@ -276,31 +276,27 @@ void MainWidget::ShowInTable(const QString &name, const QString &imagePath, cons
     item0->setText(name);
     item0->setTextAlignment(Qt::AlignCenter);
 
-    QLabel *item1 = new QLabel();
-    item1->setPixmap(QPixmap(imagePath).scaled(rowHeight - 20, rowHeight - 20));
-    item1->setAlignment(Qt::AlignCenter);
+    QTableWidgetItem *item1 = new QTableWidgetItem();
+    item1->setData(Qt::DecorationRole, QPixmap(imagePath).scaled(rowHeight-20, rowHeight-20));
 
-    QLabel *item2 = new QLabel();
-    item2->setPixmap(QPixmap::fromImage(shotFace).scaled(rowHeight - 20, rowHeight - 20));
-    item2->setAlignment(Qt::AlignCenter);
+    QTableWidgetItem *item2 = new QTableWidgetItem();
+    item2->setData(Qt::DecorationRole, QPixmap::fromImage(shotFace).scaled(rowHeight-20, rowHeight-20));
 
     QTableWidgetItem *item3 = new QTableWidgetItem();
-    item3->setText(QString("%1").arg(cosSim));
+    item3->setText(QString::number(cosSim, 'f', 3));
     item3->setTextAlignment(Qt::AlignCenter);
 
     int rowCount = face_info_table->rowCount();
     if(rowCount >= MAXROWCOUNT){
-        face_info_table->removeRow(0);
+        face_info_table->removeRow(rowCount - 1);
     }
-    face_info_table->insertRow(rowCount);
-    face_info_table->setRowHeight(rowCount, rowHeight);
+    face_info_table->insertRow(0);
+    face_info_table->setRowHeight(0, rowHeight);
 
-    face_info_table->setItem(rowCount, 0, item0);
-    face_info_table->setCellWidget(rowCount, 1, item1);
-    face_info_table->setCellWidget(rowCount, 2, item2);
-    face_info_table->setItem(rowCount, 3, item3);
-
-    face_info_table->verticalScrollBar()->setValue(face_info_table->rowCount());
+    face_info_table->setItem(0, 0, item0);
+    face_info_table->setItem(0, 1, item1);
+    face_info_table->setItem(0, 2, item2);
+    face_info_table->setItem(0, 3, item3);
 }
 
 void MainWidget::closeEvent(QCloseEvent *event)

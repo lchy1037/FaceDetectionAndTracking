@@ -4,7 +4,7 @@ MainWidget::MainWidget(QWidget *parent)
     : QWidget(parent)
 {
     setWindowTitle("Face Detection And Tracking");
-//    showMaximized();
+    showMaximized();
 
     local_video_radio = new QRadioButton("本地视频");
     camera_radio = new QRadioButton("摄像头");
@@ -16,7 +16,7 @@ MainWidget::MainWidget(QWidget *parent)
     QPixmap pixmap1(":/bg/bg1");
     pixmap1 = pixmap1.scaled(video_label->size());
     video_label->setPixmap(pixmap1);
-    video_label->setScaledContents(true);
+//    video_label->setScaledContents(true);
     face_info_table = new QTableWidget();
     face_info_table->setColumnCount(4);
     face_info_table->setColumnWidth(0, 75);

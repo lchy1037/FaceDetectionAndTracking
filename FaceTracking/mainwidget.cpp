@@ -4,6 +4,7 @@ MainWidget::MainWidget(QWidget *parent)
     : QWidget(parent)
 {
     setWindowTitle("Face Detection And Tracking");
+//    showMaximized();
 
     local_video_radio = new QRadioButton("本地视频");
     camera_radio = new QRadioButton("摄像头");
@@ -133,6 +134,7 @@ void MainWidget::StartPlayLocalVideo()
         }
         cv::Mat frame;
         if(!capture.read(frame)) break;
+        SeetaDetect(frame);
         QImage image = MatToQImage(frame);
         UpdateImage(image);
         QThread::msleep(delay);
@@ -166,11 +168,10 @@ void MainWidget::StartPlayCamera()
         }
        cv::Mat frame;
        capture >> frame;
-//       DetectFaceCascade(frame);
        SeetaDetect(frame);
        QImage image = MatToQImage(frame);
        UpdateImage(image);
-       QThread::msleep(40);
+//       QThread::msleep(40);
        QApplication::processEvents();
     }
     capture.release();

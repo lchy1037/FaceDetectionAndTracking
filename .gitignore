@@ -9,3 +9,6 @@ FaceTracking/FaceTracking.pro
 
 # ignore FaceTracking/faces
 FaceTracking/faces
+
+# ignore NOTE.md
+NOTE.md
